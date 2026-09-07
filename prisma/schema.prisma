@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  name         String
+  passwordHash String
+  role         String     @default("STUDENT")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  progress     Progress[]
+}
+
+model Module {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  description String
+  category    String
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  lessons     Lesson[]
+  exercises   Exercise[]
+  progress    Progress[]
+}
+
+model Lesson {
+  id        String   @id @default(uuid())
+  moduleId  String
+  title     String
+  content   String
+  order     Int      @default(0)
+  xp        Int      @default(10)
+  createdAt DateTime @default(now())
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Exercise {
+  id          String   @id @default(uuid())
+  moduleId    String
+  type        String   @default("CODE")
+  title       String
+  prompt      String
+  solution    String?
+  starterCode String?
+  createdAt   DateTime @default(now())
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Progress {
+  id                 String    @id @default(uuid())
+  userId             String
+  moduleId           String
+  completedLessons   Int       @default(0)
+  completedExercises Int       @default(0)
+  xp                 Int       @default(0)
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module             Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+}
